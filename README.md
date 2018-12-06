@@ -19,3 +19,5 @@ The documentation are available from the [wiki page](https://github.com/FinchTec
 * Open "Assets/Finch/Scenes/DashSample" scene if you want to use SDK for 3DOF controller.
 
 These scenes contain all necessary components for Finch support.
+
+You can [report issues](https://github.com/FinchTechnologies/FinchUnitySDK/issues) found in the SDK and documentation, as well as contact technical support at developers@finch-vr.com.
