@@ -60,6 +60,13 @@ namespace Finch
 
     public static class FinchCore
     {
+        private struct PointOptions
+        {
+            public float Speed;
+            public int Depth;
+            public float Weight;
+        }
+
         public static string Version { get; private set; }
         public static FinchSettings Settings { get; private set; }
         public static FinchNodesState NodesState { get; private set; }
@@ -81,12 +88,20 @@ namespace Finch
         public static readonly float[][] ElementTimeEvents;
         public static readonly Vector2[] TouchAxes = new Vector2[(int)Interop.FinchChirality.Last];
         public static readonly float[] Trigger = new float[(int)Interop.FinchChirality.Last];
-        public static readonly Vector3[] Gyro = new Vector3[(int)Interop.FinchNodeType.Last];
-        public static readonly Vector3[] Accel = new Vector3[(int)Interop.FinchNodeType.Last];
+        public static readonly Vector3[] NodeLinearAcceleration = new Vector3[(int)Interop.FinchNodeType.Last];
+        public static readonly Vector3[] NodeAngularVelocity = new Vector3[(int)Interop.FinchNodeType.Last];
         public static readonly ushort[] Charge = new ushort[(int)Interop.FinchNodeType.Last];
 
         public static Action<FinchNodeType> OnConnected;
         public static Action<FinchNodeType> OnDisconnected;
+
+        private const int bufferSize = 15;
+
+        private static readonly PointOptions[] Points;
+
+        private static readonly Vector3[][] bonePosition;
+        private static readonly Vector3[][] controllerPosition;
+        private static readonly float[] timeUpdate = new float[bufferSize];
 
         private static readonly Vector2[] touchesDown = new Vector2[(int)Interop.FinchChirality.Last];
         private static readonly Vector2[] touchesUp = new Vector2[(int)Interop.FinchChirality.Last];
@@ -124,6 +139,47 @@ namespace Finch
             {
                 ElementTimeEvents[i] = new float[(int)Interop.FinchControllerElement.Last];
             }
+
+            bonePosition = new Vector3[Bones.Length][];
+            controllerPosition = new Vector3[(int)Interop.FinchChirality.Last][];
+
+            for (int i = 0; i < Bones.Length; ++i)
+            {
+                bonePosition[i] = new Vector3[bufferSize];
+            }
+
+            for (int i = 0; i < (int)Interop.FinchChirality.Last; ++i)
+            {
+                controllerPosition[i] = new Vector3[bufferSize];
+            }
+
+            Points = new PointOptions[]
+            {
+                new PointOptions()
+                {
+                    Speed = 0,
+                    Depth = 9,
+                    Weight = 0.3f
+                },
+                new PointOptions()
+                {
+                    Speed = 0.4f,
+                    Depth = 6,
+                    Weight = 0.5f
+                },
+                new PointOptions()
+                {
+                    Speed = 1.6f,
+                    Depth = 4,
+                    Weight = 0.5f
+                },
+                new PointOptions()
+                {
+                    Speed = 4,
+                    Depth = 2,
+                    Weight = 1f
+                }
+            };
 
             Settings = new FinchSettings();
         }
@@ -200,10 +256,10 @@ namespace Finch
             switch (node)
             {
                 case FinchNodeType.LeftHand:
-                    return GetBoneRotation(FinchBone.LeftHand, fPose);
+                    return GetControllerRotation(FinchChirality.Left, fPose);
 
                 case FinchNodeType.RightHand:
-                    return GetBoneRotation(FinchBone.RightHand, fPose);
+                    return GetControllerRotation(FinchChirality.Right, fPose);
 
                 case FinchNodeType.LeftUpperArm:
                     return GetBoneRotation(FinchBone.LeftUpperArm, fPose);
@@ -231,10 +287,10 @@ namespace Finch
             switch (node)
             {
                 case FinchNodeType.LeftHand:
-                    return GetBonePosition(FinchBone.LeftHand);
+                    return GetControllerPosition(FinchChirality.Left);
 
                 case FinchNodeType.RightHand:
-                    return GetBonePosition(FinchBone.RightHand);
+                    return GetControllerPosition(FinchChirality.Right);
 
                 case FinchNodeType.LeftUpperArm:
                     return GetBonePosition(FinchBone.LeftUpperArm);
@@ -247,29 +303,29 @@ namespace Finch
             }
         }
 
-        public static Vector3 GetControllerPosition(FinchChirality chirality)
+        public static Vector3 GetControllerPosition(FinchChirality chirality, bool smooth = true)
         {
-            return ControllerPositions[(int)chirality];
+            return smooth ? GetControllerSmoothPosition(chirality) : ControllerPositions[(int)chirality];
         }
 
-        public static Vector3 GetBoneLocalAcceleration(FinchBone bone)
+        public static Vector3 GetNodeLinearAcceleration(FinchNodeType node)
         {
-            return Interop.FinchGetBoneLocalAcceleration((Interop.FinchBone)bone);
+            return NodeLinearAcceleration[(int)node];
         }
 
-        public static Vector3 GetBoneLocalAngularVelocity(FinchBone bone)
+        public static Vector3 GetNodeAngularVelocity(FinchNodeType node)
         {
-            return Interop.FinchGetBoneLocalAngularVelocity((Interop.FinchBone)bone);
+            return NodeAngularVelocity[(int)node];
         }
 
-        public static Vector3 GetBoneGlobalAcceleration(FinchBone bone)
+        public static float GetBoneLinearSpeed(FinchBone bone)
         {
-            return Interop.FinchGetBoneGlobalAcceleration((Interop.FinchBone)bone);
+            return GetLinearSpeed(bonePosition[BonesIndex[bone]]);
         }
 
-        public static Vector3 GetBoneGlobalAngularVelocity(FinchBone bone)
+        public static float GetControllerLinearSpeed(FinchChirality chirality)
         {
-            return Interop.FinchGetBoneGlobalAngularVelocity((Interop.FinchBone)bone);
+            return GetLinearSpeed(controllerPosition[(int)chirality]);
         }
 
         public static Vector2 GetTouchAxes(FinchChirality chirality)
@@ -318,11 +374,13 @@ namespace Finch
         {
             Interop.FinchCalibration((Interop.FinchChirality)chirality, (Interop.FinchRecenterMode)Settings.RecenterMode);
             Interop.FinchRecenter((Interop.FinchChirality)chirality, (Interop.FinchRecenterMode)Settings.RecenterMode);
+            CalibrateSmoothPosition();
         }
 
         public static void ResetCalibration(FinchChirality chirality)
         {
             Interop.FinchResetCalibration((Interop.FinchChirality)chirality);
+            CalibrateSmoothPosition();
         }
 
         public static FinchBodyRotationMode GetBodyRotationMode()
@@ -365,7 +423,8 @@ namespace Finch
             if (error == Interop.FinchUpdateError.None)
             {
                 UpdateConnectionStates();
-                UpdateControllerState();
+                UpdateData();
+                UpdateSmoothPosition();
             }
             else
             {
@@ -644,6 +703,98 @@ namespace Finch
             UpdateConnectionState(flags, prevFlags, FinchNodeType.LeftUpperArm);
         }
 
+        private static void UpdateSmoothPosition()
+        {
+            for (int i = 0; i < Bones.Length; ++i)
+            {
+                for (int j = bufferSize - 1; j > 0; --j)
+                {
+                    bonePosition[i][j] = bonePosition[i][j - 1];
+                }
+
+                bonePosition[i][0] = GetBonePosition(Bones[i]);
+            }
+
+            for (int i = 0; i < (int)Interop.FinchChirality.Last; ++i)
+            {
+                for (int j = bufferSize - 1; j > 0; --j)
+                {
+                    controllerPosition[i][j] = controllerPosition[i][j - 1];
+                }
+
+                controllerPosition[i][0] = GetControllerPosition((FinchChirality)i, false);
+            }
+
+            for (int i = bufferSize - 1; i > 0; --i)
+            {
+                timeUpdate[i] = timeUpdate[i - 1];
+            }
+
+            timeUpdate[0] = Time.time;
+        }
+
+        private static void CalibrateSmoothPosition()
+        {
+            for (int i = 0; i < Bones.Length; ++i)
+            {
+                Vector3 delta = Interop.FinchGetBonePosition((Interop.FinchBone)i) - bonePosition[i][0];
+                for (int j = 0; j < bufferSize; ++j)
+                {
+                    bonePosition[i][j] += delta;
+                }
+            }
+
+            for (int i = 0; i < (int)Interop.FinchChirality.Last; ++i)
+            {
+                Vector3 delta = Interop.FinchGetControllerPosition((Interop.FinchChirality)i) - controllerPosition[i][0];
+                for (int j = 0; j < bufferSize; ++j)
+                {
+                    controllerPosition[i][j] += delta;
+                }
+            }
+        }
+
+        private static Vector3 GetControllerSmoothPosition(FinchChirality chirality)
+        {
+            float speed = GetControllerLinearSpeed(chirality);
+            int id = Points.Length - 1;
+
+            for (int i = Points.Length - 1; i >= 0; --i)
+            {
+                if (speed > Points[i].Speed)
+                {
+                    id = i;
+                    break;
+                }
+            }
+
+            if (id == Points.Length - 1)
+            {
+                return GetPosition(Points[id], controllerPosition[(int)chirality]);
+            }
+
+            PointOptions prev = Points[id];
+            PointOptions next = Points[id + 1];
+
+            float path = Mathf.Clamp01((speed - prev.Speed) / (next.Speed - prev.Speed));
+
+            return Vector3.Lerp(GetPosition(prev, controllerPosition[(int)chirality]), GetPosition(next, controllerPosition[(int)chirality]), path);
+        }
+
+        private static Vector3 GetPosition(PointOptions options, Vector3[] positionBuffer)
+        {
+            Vector3 position = Vector3.zero;
+            float percentLeft = 1;
+
+            for (int i = 0; i < options.Depth; ++i)
+            {
+                position += positionBuffer[i] * percentLeft * options.Weight;
+                percentLeft *= (1 - options.Weight);
+            }
+
+            return position / (1 - percentLeft);
+        }
+
         private static void UpdateConnectionState(byte flag, byte prevFlag, FinchNodeType node)
         {
             bool prevState = FinchNodesState.GetState(node, FinchNodesStateType.Connected, prevFlag);
@@ -658,6 +809,26 @@ namespace Finch
             {
                 OnDisconnected.Invoke(node);
             }
+        }
+
+        private static float GetLinearSpeed(Vector3[] positions)
+        {
+            float speed = 0;
+            for (int i = 1; i < bufferSize; i++)
+            {
+                float ds = (positions[i] - positions[i - 1]).magnitude;
+                float dt = (timeUpdate[i] - timeUpdate[i - 1]);
+
+                if (dt == 0)
+                {
+                    return speed / i;
+                }
+
+                speed += Mathf.Abs(ds / dt);
+            }
+
+            speed /= bufferSize;
+            return speed;
         }
 
         private static void OnConnectedController(FinchNodeType node)
@@ -684,7 +855,7 @@ namespace Finch
             }
         }
 
-        private static void UpdateControllerState()
+        private static void UpdateData()
         {
             for (int i = 0; i < (int)Interop.FinchNodeType.Last; ++i)
             {
@@ -700,8 +871,8 @@ namespace Finch
                     ElementTimeEvents[i][j] = pressed ? ElementTimeEvents[i][j] + Time.deltaTime : 0;
                 }
 
-                Gyro[i] = Interop.FinchGetBoneLocalAngularVelocity(bone);
-                Accel[i] = Interop.FinchGetBoneLocalAcceleration(bone);
+                NodeAngularVelocity[i] = Interop.FinchGetBoneLocalAngularVelocity(bone);
+                NodeLinearAcceleration[i] = Interop.FinchGetBoneLocalAcceleration(bone);
                 Charge[i] = Interop.FinchGetNodeCharge(node);
             }
 

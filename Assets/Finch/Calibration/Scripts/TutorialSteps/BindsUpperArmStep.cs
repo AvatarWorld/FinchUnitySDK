@@ -58,7 +58,7 @@ namespace Finch
 
             private void TrembleAcceleration()
             {
-                Vector3 upperArmAccel = FinchCore.GetBoneGlobalAcceleration(bone);
+                Vector3 upperArmAccel = FinchCore.Interop.FinchGetBoneGlobalAcceleration((FinchCore.Interop.FinchBone)bone);
                 float acceleration = (upperArmAccel - Vector3.up * g).sqrMagnitude;
 
                 if (Mathf.Abs(acceleration - lastAcceleration) > accelerationBorder)

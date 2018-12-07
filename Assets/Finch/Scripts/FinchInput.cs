@@ -132,23 +132,23 @@ namespace Finch
         }
 
         /// <summary>
-        /// Returns gyroscope value in controller local coordinate system in degrees/sec.
+        /// Returns node liner acceleration in meters per second squared.
         /// </summary>
         /// <param name="node">Certain node</param>
-        /// <returns>Gyroscope value in controller local coordinate system in degrees/sec</returns>
-        public static Vector3 GetGyro(FinchNodeType node)
+        /// <returns>Liner acceleration in meters per second squared</returns>
+        public static Vector3 GetNodeLinearAcceleration(FinchNodeType node)
         {
-            return FinchCore.Gyro[(int)node];
+            return FinchCore.GetNodeLinearAcceleration(node);
         }
 
         /// <summary>
-        /// Returns accelerometer value in controller local coordinate system.
+        /// Returns node angular speed in radians per second.
         /// </summary>
         /// <param name="node">Certain node</param>
-        /// <returns>Accelerometer value in controller local coordinate system in m/s2.</returns>
-        public static Vector3 GetAccel(FinchNodeType node)
+        /// <returns>Angular speed in radians per second</returns>
+        public static Vector3 GetNodeAngularVelocity(FinchNodeType node)
         {
-            return FinchCore.Accel[(int)node];
+            return FinchCore.GetNodeAngularVelocity(node);
         }
         #endregion
 
@@ -215,6 +215,16 @@ namespace Finch
         public static float GetTrigger(FinchChirality chirality)
         {
             return FinchCore.GetIndexTrigger(chirality);
+        }
+
+        public static Vector2 GetSwipe(FinchChirality chirality)
+        {
+            return FinchCore.GetSwipe(chirality);
+        }
+
+        public static float GetSwipeTime(FinchChirality chirality)
+        {
+            return FinchCore.GetSwipeTime(chirality);
         }
         #endregion
 

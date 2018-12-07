@@ -118,19 +118,19 @@ namespace Finch
         }
 
         /// <summary>
-        /// Returns gyroscope value of the controller in local coordinate system in degrees/sec.
+        /// Returns controller angular speed in radians per second.
         /// </summary>
-        public Vector3 Gyro
+        public Vector3 AngularVelocity
         {
-            get { return FinchInput.GetGyro(Node); }
+            get { return FinchInput.GetNodeAngularVelocity(Node); }
         }
 
         /// <summary>
-        /// Returns accelerometer value of the controller in local coordinate system.
+        /// Returns controller liner acceleration in meters per second squared.
         /// </summary>
-        public Vector3 Accel
+        public Vector3 LinearAcceleration
         {
-            get { return FinchInput.GetAccel(Node); }
+            get { return FinchInput.GetNodeLinearAcceleration(Node); }
         }
         #endregion
 
