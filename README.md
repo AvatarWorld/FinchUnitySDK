@@ -1,9 +1,9 @@
 # Finch Unity SDK
 
-[![License](https://img.shields.io/github/license/FinchTechnologies/FinchUnitySDK.svg)](LICENSE)
 [![Releases](https://img.shields.io/github/release/FinchTechnologies/FinchUnitySDK.svg)](https://github.com/FinchTechnologies/FinchUnitySDK/releases)
 [![Documentation](https://img.shields.io/badge/documentation-wiki-green.svg)](https://github.com/FinchTechnologies/FinchUnitySDK/wiki)
 [![Issues](https://img.shields.io/github/issues/FinchTechnologies/FinchUnitySDK.svg)](https://github.com/FinchTechnologies/FinchUnitySDK/issues)
+[![License](https://img.shields.io/github/license/FinchTechnologies/FinchUnitySDK.svg)](LICENSE)
 
 SDK for Finch 3DoF (Dash) and Finch 6DoF (Shift) controllers. 
 
