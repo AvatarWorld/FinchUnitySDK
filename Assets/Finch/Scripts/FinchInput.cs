@@ -128,7 +128,7 @@ namespace Finch
         /// <returns>Position coordinates</returns>
         public static Vector3 GetPosition(FinchChirality chirality)
         {
-            return FinchCore.GetControllerPosition(chirality);
+            return FinchCore.GetControllerPosition(chirality, FinchCore.Settings.ControllerType != FinchControllerType.Dash);
         }
 
         /// <summary>

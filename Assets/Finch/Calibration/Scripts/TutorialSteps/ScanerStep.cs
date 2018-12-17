@@ -92,6 +92,8 @@ public class ScanerStep : TutorialStep
         if (!scannerStepPassOnce || FinchCalibration.Settings.Rescanning)
         {
             firstScanEndTime = Time.time + ScannerTime;
+            endScannerTime = Time.time + internalScannerTime + rescanFreezeTime;
+
             FinchCore.StartScan(ScannerType, (uint)(internalScannerTime * 1000.0f), (sbyte)thressholdRssi, true);
 
             UpdateScannerState();
@@ -133,14 +135,9 @@ public class ScanerStep : TutorialStep
     {
         if (Time.time > endScannerTime)
         {
-            if (!Application.isMobilePlatform)
-            {
-                ScannerType = FinchScannerType.Bonded;
-            }
-
             endScannerTime = Time.time + internalScannerTime + rescanFreezeTime;
 
-            if (Application.isMobilePlatform && !FinchCore.StartScan(ScannerType, (uint)(internalScannerTime * 1000.0f), (sbyte)thressholdRssi, true))
+            if (!FinchCore.StartScan(ScannerType, (uint)(internalScannerTime * 1000.0f), (sbyte)thressholdRssi, true))
             {
                 string err = "Error start Finch scan";
                 Debug.LogError(err);

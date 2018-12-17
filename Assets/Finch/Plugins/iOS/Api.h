@@ -106,7 +106,7 @@ extern "C"
     FINCH_API void FinchResetCalibration(FinchChirality chirality);
 
     ///Returns node current orientation without calibration adjust.
-    FINCH_API FinchQuaternion FinchGetNodeRawRotation(FinchNodeType node);
+    FINCH_API FinchQuaternion FinchGetRawRotation(FinchNodeType node);
 
     ///Returns node current calibration adjust.
     FINCH_API FinchQuaternion FinchGetCalibrationAdjust(FinchNodeType node, FinchBool isPre, FinchBool useDefaultCS);
@@ -145,6 +145,12 @@ extern "C"
 
     /// Sets the controller width.
     FINCH_API void FinchSetControllerWidth(float width);
+
+    /// Returns the controller offset.
+    FINCH_API FinchVector3 FinchGetControllerOffset(FinchChirality chirality);
+
+    /// Sets the both controller offsets by chirality controller offset.
+    FINCH_API void FinchSetControllerOffset(FinchVector3 offset, FinchChirality chirality);
 
     /// Returns the neck lean angle in radians.
     FINCH_API float FinchGetNeckLeanAngle();

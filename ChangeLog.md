@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+# [v0.5.0] - 2018-12-17
+
+## Added
+
+- Added support DVT Shift FW.
+
+## Remove
+
+- Remove support EVT Shift FW.
+
+## Fix
+
+- Fix Shift model.
+
+- Fix Dash position.
+
+- Fix BleScaner on macOS.
+
 # [v0.4.5] - 2018-12-07
 
 ## Added

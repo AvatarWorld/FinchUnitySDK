@@ -201,19 +201,17 @@ namespace Finch
             }
 
             Settings = settings;
-            isInitialized = true;
             var error = Interop.FinchInit((Interop.FinchControllerType)settings.ControllerType, Interop.FinchPlatform.Unity3D);
-
-            hmdPosition = Vector3.zero;
-            hmdRotation = Quaternion.identity;
-
-
             if (error != Interop.FinchInitError.None)
             {
                 string err = "Error initializing Finch API: " + error;
                 Debug.LogError(err);
                 throw new Exception(err);
             }
+
+            isInitialized = true;
+            hmdPosition = Vector3.zero;
+            hmdRotation = Quaternion.identity;
 
             Interop.FinchSetCs(new Interop.FinchVector3(0, -1, 0), new Interop.FinchVector3(0, 0, 1), new Interop.FinchVector3(1, 0, 0));
             Interop.FinchSetBodyRotationMode((Interop.FinchBodyRotationMode)settings.BodyRotationMode);
@@ -1415,7 +1413,7 @@ namespace Finch
             public static extern void FinchResetCalibration(FinchChirality chirality);
 
             [DllImport(LibPath, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-            public static extern FinchQuaternion FinchGetNodeRawRotation(FinchNodeType node);
+            public static extern FinchQuaternion FinchGetRawRotation(FinchNodeType node);
 
             [DllImport(LibPath, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public static extern FinchQuaternion FinchGetCalibrationAdjust(FinchNodeType node, FinchBool isPre, FinchBool useDefaultCS);
@@ -1455,6 +1453,12 @@ namespace Finch
 
             [DllImport(LibPath, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public static extern void FinchSetControllerWidth(float width);
+
+            [DllImport(LibPath, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+            public static extern FinchVector3 FinchGetControllerOffset(FinchChirality chirality);
+
+            [DllImport(LibPath, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+            public static extern void FinchSetControllerOffset(FinchVector3 offset, FinchChirality chirality);
 
             [DllImport(LibPath, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public static extern float FinchGetNeckLeanAngle();
