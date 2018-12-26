@@ -55,19 +55,19 @@ extern "C"
     FINCH_API FinchVector3 FinchGetBonePosition(FinchBone bone);
 
     /// Returns controller position relatively midpoint of left and right shoulders.
-    FINCH_API FinchVector3 FinchGetControllerPosition(FinchChirality chirality);
+    FINCH_API FinchVector3 FinchGetControllerPosition(FinchChirality chirality, FinchBool smooth);
 
-    /// Returns bone acceleration in local coordinate system.
-    FINCH_API FinchVector3 FinchGetBoneLocalAcceleration(FinchBone bone);
+    /// Returns bone angular acceleration.
+    FINCH_API FinchVector3 FinchGetBoneAngularAcceleration(FinchBone bone, FinchBool globalCS);
 
-    /// Returns bone angular velocity in local coordinate system.
-    FINCH_API FinchVector3 FinchGetBoneLocalAngularVelocity(FinchBone bone);
+    /// Returns bone linear acceleration in meters per second squared.
+    FINCH_API FinchVector3 FinchGetBoneLinearAcceleration(FinchBone bone, FinchBool globalCS);
 
-    /// Returns bone acceleration in global coordinate system.
-    FINCH_API FinchVector3 FinchGetBoneGlobalAcceleration(FinchBone bone);
+    /// Returns bone angular velocity in radians per second.
+    FINCH_API FinchVector3 FinchGetBoneAngularVelocity(FinchBone bone, FinchBool globalCS);
 
-    /// Returns bone angular velocity in global coordinate system.
-    FINCH_API FinchVector3 FinchGetBoneGlobalAngularVelocity(FinchBone bone);
+    /// Returns bone linear velocity.
+    FINCH_API FinchVector3 FinchGetBoneLinearVelocity(FinchBone bone, FinchBool globalCS);
 
     /// Returns coordinates of the touch.
     FINCH_API FinchVector2 FinchGetTouchAxes(FinchChirality chirality);
@@ -164,17 +164,12 @@ extern "C"
     /// Sets the value of the body rotation mode.
     FINCH_API void FinchSetBodyRotationMode(FinchBodyRotationMode mode);
 
-    FINCH_API uint32_t FinchGetCalibrations(char* f, uint32_t length);
-
-    FINCH_API void FinchSetCalibrations(const char* f);
-
-    FINCH_API uint32_t FinchGetMathSettings(char* f, uint32_t length);
-
-    FINCH_API void FinchSetMathSettings(const char* f);
-
     /*
      * Update
      */
+    /// Update Finch Core Data without updating nodes data.
+    FINCH_API void FinchApply();
+
     /// Update Finch Core Data.
     FINCH_API FinchUpdateError FinchUpdate();
 

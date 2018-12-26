@@ -105,10 +105,11 @@ namespace Finch
         /// Returns controller rotation.
         /// </summary>
         /// <param name="chirality">Controller chirality</param>
+        /// <param name="fPose">Use fPose rotation</param>
         /// <returns>Controller rotation quaternion</returns>
-        public static Quaternion GetRotation(FinchChirality chirality)
+        public static Quaternion GetRotation(FinchChirality chirality, bool fPose = true)
         {
-            return FinchCore.GetControllerRotation(chirality, true);
+            return FinchCore.GetControllerRotation(chirality, fPose);
         }
 
         /// <summary>
@@ -128,7 +129,7 @@ namespace Finch
         /// <returns>Position coordinates</returns>
         public static Vector3 GetPosition(FinchChirality chirality)
         {
-            return FinchCore.GetControllerPosition(chirality, FinchCore.Settings.ControllerType != FinchControllerType.Dash);
+            return FinchCore.GetControllerPosition(chirality);
         }
 
         /// <summary>
@@ -142,6 +143,16 @@ namespace Finch
         }
 
         /// <summary>
+        /// Returns controller liner acceleration in meters per second squared.
+        /// </summary>
+        /// <param name="chirality">Controller chirality</param>
+        /// <returns>Liner acceleration in meters per second squared</returns>
+        public static Vector3 GetLinearAcceleration(FinchChirality chirality)
+        {
+            return FinchCore.GetNodeLinearAcceleration((FinchNodeType)chirality);
+        }
+
+        /// <summary>
         /// Returns node angular speed in radians per second.
         /// </summary>
         /// <param name="node">Certain node</param>
@@ -150,9 +161,19 @@ namespace Finch
         {
             return FinchCore.GetNodeAngularVelocity(node);
         }
+
+        /// <summary>
+        /// Returns controller angular speed in radians per second.
+        /// </summary>
+        /// <param name="chirality">Controller chirality</param>
+        /// <returns>Angular speed in radians per second</returns>
+        public static Vector3 GetAngularVelocity(FinchChirality chirality)
+        {
+            return FinchCore.GetNodeAngularVelocity((FinchNodeType)chirality);
+        }
         #endregion
 
-        #region ControllerElementInput
+        #region ElementInput
         /// <summary>
         /// Returns element pressing state.
         /// </summary>
@@ -215,16 +236,6 @@ namespace Finch
         public static float GetTrigger(FinchChirality chirality)
         {
             return FinchCore.GetIndexTrigger(chirality);
-        }
-
-        public static Vector2 GetSwipe(FinchChirality chirality)
-        {
-            return FinchCore.GetSwipe(chirality);
-        }
-
-        public static float GetSwipeTime(FinchChirality chirality)
-        {
-            return FinchCore.GetSwipeTime(chirality);
         }
         #endregion
 

@@ -118,9 +118,9 @@ namespace Finch
         public TutorialStep IncorrectSet;
 
         private static FinchCalibration instance;
-        private AudioSource audioSource;
-
         private static CalibrationType calibrationType = CalibrationType.FullCalibration;
+
+        private AudioSource audioSource;
         private bool leftReadyCalibrate;
         private bool rightReadyCalibrate;
         private bool onPaused;
@@ -207,11 +207,8 @@ namespace Finch
 
         private void UpdatePressing()
         {
-            leftReadyCalibrate |= !IsCalbrating && FinchController.Left.HomeButtonDown;
-            leftReadyCalibrate &= !FinchController.Left.HomeButtonUp;
-
-            rightReadyCalibrate |= !IsCalbrating && FinchController.Right.HomeButtonDown;
-            rightReadyCalibrate &= !FinchController.Right.HomeButtonUp;
+            leftReadyCalibrate |= !IsCalbrating && !FinchController.Left.HomeButton;
+            rightReadyCalibrate |= !IsCalbrating && !FinchController.Right.HomeButton;
         }
 
         private void TryCalibrate()

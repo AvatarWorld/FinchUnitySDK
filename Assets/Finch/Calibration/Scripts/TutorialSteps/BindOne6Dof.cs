@@ -64,14 +64,7 @@ namespace Finch
 
         private FinchChirality GetUpperArmChirality()
         {
-            if (FinchInput.IsConnected(FinchNodeType.LeftHand))
-            {
-                return FinchChirality.Left;
-            }
-            else
-            {
-                return FinchChirality.Right;
-            }
+            return FinchInput.IsConnected(FinchNodeType.LeftHand) ? FinchChirality.Left : FinchChirality.Right;
         }
     }
 }

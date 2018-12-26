@@ -21,6 +21,7 @@ public class AnimatedSprite : MonoBehaviour
     public Sprite[] Sprites = new Sprite[0];
 
     private const float epsilon = 0.01f;
+
     private float time = 0;
 
     private void OnEnable()

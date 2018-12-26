@@ -31,28 +31,18 @@ namespace Finch
         /// <summary>
         /// Pressed button visualisation model.
         /// </summary>
-        public GameObject Press;
+        public MeshRenderer Button;
 
-        /// <summary>
-        /// Unpressed button visualisation model.
-        /// </summary>
-        public GameObject UnPress;
-
+        private readonly Color pressed = new Color(0.671f, 0.671f, 0.671f);
+        private readonly Color unpressed = Color.black;
         /// <summary>
         /// Update pressing state of buttons.
         /// </summary>
         /// <param name="isPressing"></param>
         public void UpdateState(bool isPressing)
         {
-            if (Press.activeSelf != isPressing)
-            {
-                Press.SetActive(isPressing);
-            }
-
-            if (UnPress.activeSelf == isPressing)
-            {
-                UnPress.SetActive(!isPressing);
-            }
+            Button.material.color = isPressing ? pressed : unpressed;
+            Button.material.SetColor("_EmissionColor", isPressing ? pressed : unpressed);
         }
     }
 
@@ -115,31 +105,37 @@ namespace Finch
         public BatteryLevel[] BatteryLevels = new BatteryLevel[4];
 
         [Header("Touch element")]
-        public GameObject TouchpadBase;
-        public GameObject JoystickBase;
-
         /// <summary>
-        /// Touchpad model element transform.
+        /// Touch point model element transform.
         /// </summary>
-        public Transform Touchpad;
+        public Transform TouchPoint;
 
         /// <summary>
         /// Stick model element transform.
         /// </summary>
         public Transform Joystick;
 
+        /// <summary>
+        /// Visualisation of touchpad modification.
+        /// </summary>
+        public GameObject TouchpadModel;
+
+        /// <summary>
+        /// Visualisation of joustick modification.
+        /// </summary>
+        public GameObject JoystickModel;
+
         private FinchController controller;
+        private float batteryLevel;
+        private float touchPointPower;
+
         private const float epsilon = 0.05f;
         private const float chargeLevelEpsilon = 1.5f;
-        private float batteryLevel;
-
         private const float touchPointDepth = 0.001f;
         private const float maxAngleRotation = 18.0f;
         private const float touchPadRadius = 0.0175f;
-        private const float touchPointRadius = 0.28f;
+        private const float touchPointRadius = 0.0056f;
         private const float scaleTimer = 0.15f;
-
-        private float touchPointPower;
 
         private void LateUpdate()
         {
@@ -147,7 +143,8 @@ namespace Finch
 
             ButtonUpdate();
             BatteryUpdate();
-            TouchElementUpdate();
+            UpdateJoystick();
+            UpdateTouchpad();
             StateUpdate();
         }
 
@@ -181,14 +178,12 @@ namespace Finch
             }
 
             bool isBatteryActive = (FinchInput.IsConnected(controller.Node)) && BatteryLevels.Length > 0;
-
             if (BatteryObject.gameObject.activeSelf != isBatteryActive)
             {
                 BatteryObject.gameObject.SetActive(isBatteryActive);
             }
 
             float currentBatteryLevel = Mathf.Clamp(FinchInput.GetBatteryCharge(controller.Node), 0f, 99.9f);
-
             if (isBatteryActive && Math.Abs(currentBatteryLevel - batteryLevel) > chargeLevelEpsilon)
             {
                 Sprite batterySprite = null;
@@ -209,38 +204,39 @@ namespace Finch
             }
         }
 
-        private void TouchElementUpdate()
+        private void UpdateJoystick()
         {
-            if (TouchpadBase != null)
+            if (JoystickModel != null)
             {
-                TouchpadBase.SetActive(controller.IsTouchpadAvailable);
+                JoystickModel.SetActive(controller.IsJoystickAvailable);
             }
 
-            if (JoystickBase != null)
-            {
-                JoystickBase.SetActive(controller.IsJoystickAvailable);
-            }
-
-            if (controller.IsTouchpadAvailable)
-            {
-                Vector3 size = new Vector3(touchPointRadius, touchPointDepth, touchPointRadius);
-                float speed = Time.deltaTime / Mathf.Max(epsilon, scaleTimer);
-
-                touchPointPower = Mathf.Clamp01(touchPointPower + (controller.GetPress(FinchControllerElement.Touch) ? 1 : -1) * speed);
-
-                if (Touchpad != null)
-                {
-                    Touchpad.localScale = controller.GetPress(FinchControllerElement.ThumbButton) ? Vector3.zero : size * touchPointPower;
-
-                    if (controller.IsTouching)
-                    {
-                        Touchpad.localPosition = new Vector3(controller.TouchAxes.x, Touchpad.localPosition.y, controller.TouchAxes.y) * touchPadRadius;
-                    }
-                }
-            }
-            else if (Joystick != null)
+            if (Joystick != null)
             {
                 Joystick.transform.localEulerAngles = new Vector3(controller.TouchAxes.y, 0, -controller.TouchAxes.x) * maxAngleRotation;
+            }
+        }
+
+        private void UpdateTouchpad()
+        {
+            if (TouchpadModel != null)
+            {
+                TouchpadModel.SetActive(controller.IsTouchpadAvailable);
+            }
+
+            Vector3 size = new Vector3(touchPointRadius, touchPointDepth, touchPointRadius);
+            float speed = Time.deltaTime / Mathf.Max(epsilon, scaleTimer) * (controller.GetPress(FinchControllerElement.Touch) ? 1 : -1);
+
+            touchPointPower = controller.IsTouchpadAvailable ? Mathf.Clamp01(touchPointPower + speed) : 0;
+
+            if (TouchPoint != null)
+            {
+                TouchPoint.localScale = controller.GetPress(FinchControllerElement.ThumbButton) ? Vector3.zero : size * touchPointPower;
+
+                if (controller.IsTouching)
+                {
+                    TouchPoint.localPosition = new Vector3(controller.TouchAxes.x, TouchPoint.localPosition.y, controller.TouchAxes.y) * touchPadRadius;
+                }
             }
         }
     }

@@ -239,11 +239,6 @@ namespace Finch
         /// <returns>Controller element pressing time.</returns>
         public static float GetPressTime(FinchChirality chirality, FinchControllerElement element)
         {
-            if (chirality > FinchChirality.Left)
-            {
-                throw new ArgumentException();
-            }
-
             return FinchInput.GetPressTime((FinchNodeType)chirality, element);
         }
 
@@ -475,7 +470,6 @@ namespace Finch
         #endregion
 
         #region Haptic
-
         /// <summary>
         /// Sends vibration signal to the node. 
         /// </summary>
@@ -534,6 +528,40 @@ namespace Finch
         }
         #endregion
 
+        #region Swipe
+        /// <summary>
+        /// Return swipe to right.
+        /// </summary>
+        public bool SwipeRight
+        {
+            get { return IsSwiped(Vector2.right); }
+        }
+
+        /// <summary>
+        /// Return swipe to left.
+        /// </summary>
+        public bool SwipeLeft
+        {
+            get { return IsSwiped(Vector2.left); }
+        }
+
+        /// <summary>
+        /// Return swipe to top.
+        /// </summary>
+        public bool SwipeTop
+        {
+            get { return IsSwiped(Vector2.up); }
+        }
+
+        /// <summary>
+        /// Return swipe to bottom.
+        /// </summary>
+        public bool SwipeBottom
+        {
+            get { return IsSwiped(Vector2.down); }
+        }
+        #endregion
+
         /// <summary>
         /// If the controller have a touchpad.
         /// </summary>
@@ -564,6 +592,14 @@ namespace Finch
         public ushort BatteryCharge
         {
             get { return FinchInput.GetBatteryCharge(Node); }
+        }
+
+        private bool IsSwiped(Vector2 baseRotationVector)
+        {
+            bool correctLength = FinchCore.GetSwipe(Chirality).magnitude > 0.4f;
+            bool correctTime = FinchCore.GetSwipeTime(Chirality) < 0.5f;
+            bool correctAngle = Vector2.Angle(baseRotationVector, FinchCore.GetSwipe(Chirality).normalized) < 22.5f;
+            return correctLength && correctTime && correctAngle;
         }
     }
 }

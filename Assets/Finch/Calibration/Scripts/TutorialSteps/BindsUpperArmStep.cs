@@ -41,13 +41,13 @@ namespace Finch
             public float sideAboveZero;
             public float sideBelowZero;
 
-            private FinchBone bone;
+            private FinchNodeType node;
             private bool directionUp;
             private float lastAcceleration;
 
-            public TrembleOptions(FinchBone finchBone)
+            public TrembleOptions(FinchNodeType node)
             {
-                bone = finchBone;
+                this.node = node;
             }
 
             public void UpdateState()
@@ -58,7 +58,7 @@ namespace Finch
 
             private void TrembleAcceleration()
             {
-                Vector3 upperArmAccel = FinchCore.Interop.FinchGetBoneGlobalAcceleration((FinchCore.Interop.FinchBone)bone);
+                Vector3 upperArmAccel = FinchCore.GetNodeLinearAcceleration(node);
                 float acceleration = (upperArmAccel - Vector3.up * g).sqrMagnitude;
 
                 if (Mathf.Abs(acceleration - lastAcceleration) > accelerationBorder)
@@ -75,8 +75,8 @@ namespace Finch
 
             private void ArmDirection()
             {
-                Vector3 origin = (bone == FinchBone.RightUpperArm) ? Vector3.right : Vector3.left;
-                float y = (FinchCore.GetBoneRotation(bone, false) * origin).y;
+                Vector3 origin = (node == FinchNodeType.RightUpperArm) ? Vector3.right : Vector3.left;
+                float y = (FinchCore.GetNodeRotation(node, false) * origin).y;
 
                 if (Mathf.Abs(y) < angleBorder)
                 {
@@ -114,45 +114,14 @@ namespace Finch
         /// </summary>
         public GameObject TutorialArmsDown;
 
-        [Header("Warnings")]
         /// <summary>
-        /// Spite renderer object visualizes warning Image part.
+        /// An object that visualizes the part of the tutorial that is responsible for prevent shaking left arm.
         /// </summary>
-        public SpriteRenderer WarningImage;
-
-        /// <summary>
-        /// Image of shaking hand warning.
-        /// </summary>
-        public Sprite WarningShake;
-
-        /// <summary>
-        /// Image of a hand-lowering warning.
-        /// </summary>
-        public Sprite WarningArmsDown;
-
-        /// <summary>
-        /// Spite renderer object visualizes warning Notification part.
-        /// </summary>
-        public SpriteRenderer WarningNotification;
-
-        /// <summary>
-        /// Image warning about the shaking of the left hand.
-        /// </summary>
-        public Sprite LeftUpperArmShaking;
-
-        /// <summary>
-        /// Image of a warning about the lack of intensity of the shaking of the right hand.
-        /// </summary>
-        public Sprite RightUpperArmNotShaking;
-
-        /// <summary>
-        /// Image of a warning that both hands are omitted.
-        /// </summary>
-        public Sprite BothUpperArmsHorizontal;
+        public GameObject WarningLeftArmShaking;
 
         [Header("Timer options")]
         /// <summary>
-        /// Time to go through the shaking hand stage.
+        ///  Time to go through the shaking hand stage.
         /// </summary>
         public float TimeShakeTutorial = 2.5f;
 
@@ -174,13 +143,13 @@ namespace Finch
         private const float g = 9.8f;
         private const float orientationRatio = 2f;
 
-        private TrembleOptions leftArm = new TrembleOptions(FinchBone.LeftUpperArm);
-        private TrembleOptions rightArm = new TrembleOptions(FinchBone.RightUpperArm);
+        private TrembleOptions leftArm = new TrembleOptions(FinchNodeType.LeftUpperArm);
+        private TrembleOptions rightArm = new TrembleOptions(FinchNodeType.RightUpperArm);
 
-        private float timeLeft;
+        private float timeGetResult;
 
-        private bool waitingResult;
         private bool tremblePass;
+        private bool leftArmShaking;
 
         public override void Init(int id)
         {
@@ -208,6 +177,7 @@ namespace Finch
             }
 
             tremblePass = FinchCore.NodesState.GetUpperArmCount() < 2;
+            leftArmShaking = false;
 
             ResetValue();
             TryPassStepWithoutRedefine();
@@ -245,11 +215,7 @@ namespace Finch
 
         private void TryPassStepWithRedefine()
         {
-            timeLeft -= Time.deltaTime;
-
-            waitingResult |= timeLeft > TimeErrorShow;
-
-            if (timeLeft > TimeErrorShow)
+            if (Time.time <= timeGetResult)
             {
                 leftArm.UpdateState();
                 rightArm.UpdateState();
@@ -261,75 +227,37 @@ namespace Finch
             bool tremble = Mathf.Max(leftArm.TrembleCount, rightArm.TrembleCount) > minShakingCount && (leftToRightRatio || rightToLeftRatio);
             bool leftDirectionCorrect = !FinchInput.IsConnected(FinchNodeType.LeftUpperArm) || leftArm.DirectionPass;
             bool rightDirectionCorrect = !FinchInput.IsConnected(FinchNodeType.RightUpperArm) || rightArm.DirectionPass;
-            bool twoUpperArms = FinchCore.NodesState.GetUpperArmCount() == 2;
-
-            if (timeLeft < TimeErrorShow || tremble && !tremblePass)
+            bool swapNodes = FinchCore.NodesState.GetUpperArmCount() == 2 && leftToRightRatio;
+            if (Time.time > timeGetResult || tremble && !tremblePass)
             {
-                if (waitingResult)
+                if ((tremblePass || tremble) && leftDirectionCorrect && rightDirectionCorrect)
                 {
-                    waitingResult = false;
-
-                    if ((tremblePass || tremble) && leftDirectionCorrect && rightDirectionCorrect)
-                    {
-                        BindsOrientation(leftToRightRatio && twoUpperArms);
-                        BindsChirality(leftToRightRatio && twoUpperArms);
-                        BindUpperArms();
-                        NextStep();
-                        return;
-                    }
-
-                    if (tremble && !tremblePass)
-                    {
-                        BindsChirality(leftToRightRatio && twoUpperArms);
-                        tremblePass = true;
-                        ResetValue();
-                        return;
-                    }
-
-                    WarningImage.sprite = tremblePass ? WarningArmsDown : WarningShake;
-                    WarningNotification.sprite = GetErrorSprite(tremble || tremblePass);
+                    BindsOrientation(swapNodes);
+                    BindsChirality(swapNodes);
+                    BindUpperArms();
+                    NextStep();
+                    return;
                 }
 
-                if (timeLeft < 0)
+                if (tremble && !tremblePass)
                 {
+                    BindsChirality(leftToRightRatio);
+                    tremblePass = true;
                     ResetValue();
+                    return;
                 }
+
+                leftArmShaking = Mathf.Max(leftArm.TrembleCount, rightArm.TrembleCount) > minShakingCount;
+
+                ResetValue();
             }
         }
 
         private void UpdateSprite()
         {
-            if (TutorialShake.activeSelf != (timeLeft > TimeErrorShow && !tremblePass))
-            {
-                TutorialShake.SetActive(timeLeft > TimeErrorShow && !tremblePass);
-            }
-
-            if (TutorialArmsDown.activeSelf != (timeLeft > TimeErrorShow && tremblePass))
-            {
-                TutorialArmsDown.SetActive(timeLeft > TimeErrorShow && tremblePass);
-            }
-
-            if (WarningNotification.gameObject.activeSelf != (timeLeft <= TimeErrorShow))
-            {
-                WarningNotification.gameObject.SetActive(timeLeft <= TimeErrorShow);
-            }
-
-            if (WarningImage.gameObject.activeSelf != (timeLeft <= TimeErrorShow))
-            {
-                WarningImage.gameObject.SetActive(timeLeft <= TimeErrorShow);
-            }
-        }
-
-        private Sprite GetErrorSprite(bool thrembleSucces)
-        {
-            if (thrembleSucces)
-            {
-                return BothUpperArmsHorizontal;
-            }
-            else
-            {
-                return Mathf.Max(leftArm.TrembleCount, rightArm.TrembleCount) > minShakingCount ? LeftUpperArmShaking : RightUpperArmNotShaking;
-            }
+            TutorialArmsDown.SetActive(tremblePass);
+            TutorialShake.SetActive(!tremblePass && !leftArmShaking);
+            WarningLeftArmShaking.SetActive(!tremblePass && leftArmShaking);
         }
 
         private void BindsChirality(bool swapNodes)
@@ -372,7 +300,7 @@ namespace Finch
 
         private void ResetValue()
         {
-            timeLeft = (FinchCore.NodesState.GetUpperArmCount() > 1 ? TimeShakeTutorial : TimeArmsDownTutorial) + TimeErrorShow;
+            timeGetResult = Time.time + (FinchCore.NodesState.GetUpperArmCount() > 1 ? TimeShakeTutorial : TimeArmsDownTutorial);
             leftArm.ResetValue();
             rightArm.ResetValue();
         }

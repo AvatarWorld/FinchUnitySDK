@@ -52,7 +52,6 @@ public class ScanerStep : TutorialStep
         public int UpperArmCount;
     }
 
-
     [Header("Nodes warnings")]
     /// <summary>
     /// An object that serves to render an error warning.
@@ -70,18 +69,12 @@ public class ScanerStep : TutorialStep
     /// </summary>
     public FinchScannerType ScannerType = FinchScannerType.BA;
 
-    /// <summary>
-    /// Visualization time at the first scan.
-    /// </summary>
-    public float ScannerTime = 2.0f;
+    public static bool ScanerPass;
 
     private const float internalScannerTime = 0.75f;
     private const float rescanFreezeTime = 2.0f;
     private const int thressholdRssi = -100;
 
-    private bool firstScanEnd { get { return Time.time > firstScanEndTime; } }
-
-    private float firstScanEndTime;
     private float endScannerTime;
     private bool scannerStepPassOnce;
 
@@ -89,9 +82,10 @@ public class ScanerStep : TutorialStep
     {
         base.Init(id);
 
-        if (!scannerStepPassOnce || FinchCalibration.Settings.Rescanning)
+        ScanerPass = !scannerStepPassOnce || FinchCalibration.Settings.Rescanning;
+
+        if (ScanerPass)
         {
-            firstScanEndTime = Time.time + ScannerTime;
             endScannerTime = Time.time + internalScannerTime + rescanFreezeTime;
 
             FinchCore.StartScan(ScannerType, (uint)(internalScannerTime * 1000.0f), (sbyte)thressholdRssi, true);
@@ -116,7 +110,7 @@ public class ScanerStep : TutorialStep
 
     private void UpdateWarnings()
     {
-        WaitingPicture.SetActive(!firstScanEnd);
+        WaitingPicture.SetActive(FinchCore.NodesState.GetNodesCount() == 0);
 
         int upperArmsCount = FinchCore.NodesState.GetUpperArmCount();
         int controllersCount = FinchCore.NodesState.GetControllersCount();
@@ -124,7 +118,7 @@ public class ScanerStep : TutorialStep
 
         foreach (Warning i in Warnings)
         {
-            bool state = i.UpperArmCount == upperArmsCount && i.ControllerCount == controllersCount && firstScanEnd;
+            bool state = i.UpperArmCount == upperArmsCount && i.ControllerCount == controllersCount && FinchCore.NodesState.GetNodesCount() > 0;
             i.WarningObject.SetActive(state && !alreadyFind);
 
             alreadyFind |= state;
@@ -163,7 +157,7 @@ public class ScanerStep : TutorialStep
             skipDuePress |= i != FinchControllerElement.Touch && (isShift ? isPressing : enoughPressing);
         }
 
-        if (skipDueCorrectSet || skipDuePress && firstScanEnd)
+        if (skipDueCorrectSet || skipDuePress)
         {
             PlayableSet.RememberNodes();
             scannerStepPassOnce = true;

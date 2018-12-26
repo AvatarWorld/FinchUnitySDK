@@ -62,7 +62,7 @@ namespace Finch
 
         private void TryAutoCalibrate()
         {
-            if (FinchCore.NodesState.GetControllersCount() == 1)
+            if (FinchCore.NodesState.GetControllersCount() == 1 && ScanerStep.ScanerPass)
             {
                 leftPressDown = true;
                 rightPressDown = true;

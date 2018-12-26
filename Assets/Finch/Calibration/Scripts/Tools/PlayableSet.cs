@@ -25,7 +25,7 @@ namespace Finch
         {
             get
             {
-                return !setBinds || AllPlayableControllersConnected && AllPlayableUpperArmsConnected;
+                return setBinds && AllPlayableControllersConnected && AllPlayableUpperArmsConnected;
             }
         }
 

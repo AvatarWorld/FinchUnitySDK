@@ -57,8 +57,7 @@ namespace Finch
                 {
                     FinchController.Left.HapticPulse(FinchCalibration.Settings.HapticTime);
                     FinchController.Right.HapticPulse(FinchCalibration.Settings.HapticTime);
-                    FinchController.Left.Calibrate();
-                    FinchController.Right.Calibrate();
+                    FinchController.Calibrate(FinchChirality.Both);
                     NextStep();
                 }
                 else

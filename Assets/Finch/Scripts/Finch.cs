@@ -104,7 +104,7 @@ namespace Finch
         /// <summary>
         /// Provides versioning information for the Finch SDK for Unity.
         /// </summary>
-        public readonly string Version = "0.5.0";
+        public readonly string Version = "0.5.1";
 
         /// <summary>
         /// Head position transform.
