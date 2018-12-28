@@ -2764,17 +2764,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CalibrationOptions:
+    RealibrationType: 1
+    AvailableMomentalCalibration: 1
     CalibrateOnStart: 1
-    Calibration: 1
+    CalibrateOnResume: 1
+    CalibrateOnDisconnect: 1
     Rescanning: 0
-    TimeToCallModule: 0.3
+    TimePressingToCallCalibration: 0.3
     HapticTime: 120
   StartCalibration: {fileID: 8300000, guid: 783dc1100f0ae8b47a28d475ac4459d5, type: 3}
   Succes: {fileID: 8300000, guid: b19b1eabb3b20564996bddbe39b3ff7c, type: 3}
   FullCalibration:
   - {fileID: 114808701179981076}
   - {fileID: 114188184387420420}
-  FastCalibration: []
+  FastCalibration:
+  - {fileID: 114188184387420420}
   IncorrectSet: {fileID: 114199570249159404}
 --- !u!114 &114808701179981076
 MonoBehaviour:

@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+# [v0.5.2] - 2018-12-28
+
+## Added
+
+- Added new Calibration parameters.
+
+# [v0.5.1] - 2018-12-26
+
+## Added
+
+- Script FinchInput: class FinchInput:
+     - GetLinearAcceleration - Returns controller liner acceleration in meters per second squared.
+     - GetAngularVelocity - Returns controller angular speed in radians per second.
+
+- Added changing material color for visualise active controller element state.
+
+## Remove
+
+- Remove controller model elements, visualised active element state.
+
+## Fix
+
+- Fix controller jump after recalibration.
+
+- Fix Shift Calibration tutorial positions.
+
+- Fix controllers disconnect and recconect.
+
+- Fix Dash position while changing position of it's root.
+
+- Fix BleScaner on IOS and MacOS.
+
 # [v0.5.0] - 2018-12-17
 
 ## Added

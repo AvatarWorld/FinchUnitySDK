@@ -151,7 +151,7 @@ public class ScanerStep : TutorialStep
 
         foreach (FinchControllerElement i in (FinchControllerElement[])Enum.GetValues(typeof(FinchControllerElement)))
         {
-            bool enoughPressing = Math.Max(FinchController.Left.GetPressTime(i), FinchController.Right.GetPressTime(i)) > FinchCalibration.Settings.TimeToCallModule;
+            bool enoughPressing = Math.Max(FinchController.Left.GetPressTime(i), FinchController.Right.GetPressTime(i)) > FinchCalibration.Settings.TimePressingToCallCalibration;
             bool isPressing = FinchController.GetPressDown(FinchChirality.Any, i);
 
             skipDuePress |= i != FinchControllerElement.Touch && (isShift ? isPressing : enoughPressing);

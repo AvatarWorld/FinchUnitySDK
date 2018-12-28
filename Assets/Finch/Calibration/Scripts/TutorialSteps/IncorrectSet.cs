@@ -61,9 +61,13 @@ namespace Finch
                     break;
             }
 
-            if (PlayableSet.AllPlayableNodesConnected)
+
+            bool leftReady = !FinchController.Left.IsConnected || FinchController.Left.GetPressTime(FinchControllerElement.HomeButton) > FinchCalibration.Settings.TimePressingToCallCalibration;
+            bool rightReady = !FinchController.Right.IsConnected || FinchController.Right.GetPressTime(FinchControllerElement.HomeButton) > FinchCalibration.Settings.TimePressingToCallCalibration;
+
+            if (PlayableSet.AllPlayableNodesConnected || leftReady && rightReady && FinchCore.NodesState.GetControllersCount() > 0)
             {
-                gameObject.SetActive(false);
+                FinchCalibration.Calibrate(CalibrationType.FullCalibration);
             }
         }
     }

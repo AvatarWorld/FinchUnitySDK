@@ -33,27 +33,39 @@ namespace Finch
     public class FinchCalibrationSettings
     {
         /// <summary>
+        /// Type of calibration.
+        /// </summary>
+        public CalibrationType Calibration = CalibrationType.FastCalibration;
+
+        public bool AvailableMomentalCalibration = true;
+
+        /// <summary>
         /// Load calibration module on start.
         /// </summary>
         public bool CalibrateOnStart = true;
 
         /// <summary>
-        /// Calibrate without the module.
+        /// Load calibration module on resume.
         /// </summary>
-        public CalibrationType Calibration = CalibrationType.FastCalibration;
+        public bool CalibrateOnResume = true;
 
         /// <summary>
-        /// Call scanner each time you calibrate. 
+        /// Load calibration module on controller disconnect.
+        /// </summary>
+        public bool CalibrateOnDisconnect = true;
+
+        /// <summary>
+        /// Call scanner each time you calibrate.
         /// </summary>
         public bool Rescanning = false;
 
         /// <summary>
-        /// Press calibration button to call module.
+        /// Time pressing home button to call calibration module.
         /// </summary>
-        public float TimeToCallModule = 0.3f;
+        public float TimePressingToCallCalibration = 0.3f;
 
         /// <summary>
-        /// Haptic after calibration.
+        /// Haptic time after calibration.
         /// </summary>
         public ushort HapticTime = 120;
     }
@@ -68,6 +80,8 @@ namespace Finch
         /// Calibration settings.
         /// </summary>
         public static FinchCalibrationSettings Settings = new FinchCalibrationSettings();
+
+        public static bool IsCalbrated { get; private set; }
 
         /// <summary>
         /// Is calibration module active.
@@ -125,6 +139,17 @@ namespace Finch
         private bool rightReadyCalibrate;
         private bool onPaused;
 
+        private bool availableMomentalCalibration
+        {
+            get
+            {
+                bool leftCapacityCorrect = !FinchController.Left.IsConnected || FinchCore.GetCapacitySensor(FinchNodeType.LeftHand) == FinchChirality.Left;
+                bool rightCapacityCorrect = !FinchController.Right.IsConnected || FinchCore.GetCapacitySensor(FinchNodeType.RightHand) == FinchChirality.Right;
+                bool angleCorrect = NodeAngleChecker.IsCorrectAngle || FinchCore.NodesState.GetUpperArmCount() == 0;
+                return leftCapacityCorrect && rightCapacityCorrect && angleCorrect;
+            }
+        }
+
         /// <summary>
         /// Calibration module call.
         /// </summary>
@@ -144,6 +169,7 @@ namespace Finch
 
         private void Awake()
         {
+            IsCalbrated = false;
             audioSource = GetComponent<AudioSource>();
             Settings = CalibrationOptions;
             FinchCore.OnDisconnected += OnDisconnectNode;
@@ -154,7 +180,6 @@ namespace Finch
         {
             instance = this;
             TurnOffSteps();
-
             if (Settings.CalibrateOnStart)
             {
                 Calibrate(CalibrationType.FullCalibration);
@@ -168,7 +193,10 @@ namespace Finch
             if (onPaused)
             {
                 onPaused = false;
-                Calibrate(CalibrationType.FullCalibration);
+                if (Settings.CalibrateOnResume)
+                {
+                    Calibrate(CalibrationType.FullCalibration);
+                }
             }
 
             UpdatePressing();
@@ -178,13 +206,15 @@ namespace Finch
         private void OnApplicationPause(bool pause)
         {
             onPaused |= pause;
+            IsCalbrated = false;
         }
 
         private void OnDisconnectNode(FinchNodeType node)
         {
-            if (!PlayableSet.AllPlayableNodesConnected)
+            if (!PlayableSet.AllPlayableNodesConnected && CalibrationOptions.CalibrateOnDisconnect)
             {
-                IsCalbrating = false;
+                IsCalbrating = true;
+                IsCalbrated = false;
                 TurnOffSteps();
                 IncorrectSet.Init(0);
             }
@@ -207,58 +237,65 @@ namespace Finch
 
         private void UpdatePressing()
         {
-            leftReadyCalibrate |= !IsCalbrating && !FinchController.Left.HomeButton;
-            rightReadyCalibrate |= !IsCalbrating && !FinchController.Right.HomeButton;
+            leftReadyCalibrate &= !IsCalbrating;
+            rightReadyCalibrate &= !IsCalbrating;
+            leftReadyCalibrate |= !FinchController.Left.HomeButton;
+            rightReadyCalibrate |= !FinchController.Right.HomeButton;
         }
 
         private void TryCalibrate()
         {
-            bool leftReady = !FinchController.Left.IsConnected || leftReadyCalibrate && FinchController.Left.GetPressTime(FinchControllerElement.HomeButton) > Settings.TimeToCallModule;
-            bool rightReady = !FinchController.Right.IsConnected || rightReadyCalibrate && FinchController.Right.GetPressTime(FinchControllerElement.HomeButton) > Settings.TimeToCallModule;
-            bool fastCalibrate = Settings.Calibration == CalibrationType.FastCalibration && PlayableSet.AllPlayableNodesConnected;
-            bool useDash = FinchCore.Settings.ControllerType == FinchControllerType.Dash;
-
-            if (fastCalibrate && useDash)
+            if (IsCalbrating)
             {
-                if (leftReady)
-                {
-                    FastCalibrate(FinchController.Left);
-                    leftReadyCalibrate = false;
-                }
+                return;
+            }
 
-                if (rightReady)
+            bool leftReady = !FinchController.Left.IsConnected || leftReadyCalibrate && FinchController.Left.GetPressTime(FinchControllerElement.HomeButton) > Settings.TimePressingToCallCalibration;
+            bool rightReady = !FinchController.Right.IsConnected || rightReadyCalibrate && FinchController.Right.GetPressTime(FinchControllerElement.HomeButton) > Settings.TimePressingToCallCalibration;
+
+            if (Settings.AvailableMomentalCalibration)
+            {
+                if (FinchCore.Settings.ControllerType == FinchControllerType.Dash)
                 {
-                    FastCalibrate(FinchController.Right);
-                    rightReadyCalibrate = false;
+                    if (leftReady)
+                    {
+                        FastCalibrate(FinchController.Left);
+                        leftReadyCalibrate = false;
+                    }
+
+                    if (rightReady)
+                    {
+                        FastCalibrate(FinchController.Right);
+                        rightReadyCalibrate = false;
+                    }
+                }
+                else if (leftReady && rightReady)
+                {
+                    if (availableMomentalCalibration)
+                    {
+                        leftReadyCalibrate = false;
+                        rightReadyCalibrate = false;
+                        FinchController.Left.HapticPulse(Settings.HapticTime);
+                        FinchController.Right.HapticPulse(Settings.HapticTime);
+                        FinchCore.Calibration(FinchChirality.Both);
+                    }
+                    else
+                    {
+                        leftReadyCalibrate = false;
+                        rightReadyCalibrate = false;
+
+                        ResetCalibration();
+                        Calibrate(Settings.Calibration);
+                    }
                 }
             }
-            else if (FinchCore.NodesState.GetControllersCount() > 0 && leftReady && rightReady && !IsCalbrating)
+            else if (FinchCore.NodesState.GetControllersCount() > 0 && leftReady && rightReady)
             {
                 leftReadyCalibrate = false;
                 rightReadyCalibrate = false;
 
                 ResetCalibration();
-
-                bool leftCapacityCorrect = !FinchController.Left.IsConnected || FinchCore.GetCapacitySensor(FinchNodeType.LeftHand) == FinchChirality.Left;
-                bool rightCapacityCorrect = !FinchController.Right.IsConnected || FinchCore.GetCapacitySensor(FinchNodeType.RightHand) == FinchChirality.Right;
-                bool angleCorrect = NodeAngleChecker.IsCorrectAngle;
-                bool momentalCalibration = leftCapacityCorrect && rightCapacityCorrect && angleCorrect && !useDash;
-
-                if (fastCalibrate && momentalCalibration)
-                {
-                    FinchController.Left.HapticPulse(Settings.HapticTime);
-                    FinchController.Right.HapticPulse(Settings.HapticTime);
-                    FinchCore.Calibration(FinchChirality.Both);
-                }
-                else
-                {
-                    if (!(PlayableSet.AllPlayableNodesConnected))
-                    {
-                        PlayableSet.ResetSaveComlect();
-                    }
-
-                    Calibrate(PlayableSet.AllPlayableNodesConnected ? Settings.Calibration : CalibrationType.FullCalibration);
-                }
+                Calibrate(Settings.Calibration);
             }
         }
 
@@ -280,6 +317,7 @@ namespace Finch
             if (stepId <= 0)
             {
                 audioSource.Stop();
+                IsCalbrated = false;
                 IsCalbrating = true;
 
                 if (OnCalibrationStart != null)
@@ -306,6 +344,7 @@ namespace Finch
 
             if (stepId >= steps.Length)
             {
+                IsCalbrated = true;
                 IsCalbrating = false;
 
                 if (OnCalibrationEnd != null)

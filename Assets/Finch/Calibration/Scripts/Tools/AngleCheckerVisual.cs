@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using UnityEngine;
+using Finch;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class AngleCheckerVisual : MonoBehaviour
@@ -22,13 +23,30 @@ public class AngleCheckerVisual : MonoBehaviour
 
     private SpriteRenderer sprite;
 
-    void Start()
+    private void Awake()
     {
         sprite = GetComponent<SpriteRenderer>();
     }
 
-    void Update()
+    private void OnEnable()
     {
-        sprite.color = NodeAngleChecker.IsCorrectAngle ? Success : Fail;
+        UpdateColor();
+    }
+
+    private void Update()
+    {
+        UpdateColor();
+    }
+
+    private void UpdateColor()
+    {
+        if (FinchCore.NodesState.GetUpperArmCount() > 0)
+        {
+            sprite.color = NodeAngleChecker.IsCorrectAngle ? Success : Fail;
+        }
+        else
+        {
+            sprite.color = new Color(0, 0, 0, 0);
+        }
     }
 }

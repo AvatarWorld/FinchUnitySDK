@@ -152,12 +152,7 @@ namespace Finch
         {
             bool hideCauseCalibration = FinchCalibration.IsCalbrating && HideInCalibration;
             bool hideCauseDisconnect = !controller.IsConnected;
-            bool hideCauseIncorrectSet = !PlayableSet.AllPlayableNodesConnected;
-
-            if (Model.activeSelf != (!hideCauseCalibration && !hideCauseDisconnect && !hideCauseIncorrectSet))
-            {
-                Model.SetActive(!hideCauseCalibration && !hideCauseDisconnect && !hideCauseIncorrectSet);
-            }
+            Model.SetActive(!hideCauseCalibration && !hideCauseDisconnect);
         }
 
         private void ButtonUpdate()

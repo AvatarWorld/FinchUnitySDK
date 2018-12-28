@@ -128,8 +128,8 @@ namespace Finch
             FinchController mainController = chirality == FinchChirality.Left ? FinchController.Left : FinchController.Right;
             FinchController additionalController = chirality == FinchChirality.Left ? FinchController.Right : FinchController.Left;
 
-            bool leftCalibrate = leftPressDown && FinchController.Left.GetPressTime(FinchControllerElement.HomeButton) > FinchCalibration.Settings.TimeToCallModule;
-            bool rightCalibrate = rightPressDown && FinchController.Right.GetPressTime(FinchControllerElement.HomeButton) > FinchCalibration.Settings.TimeToCallModule;
+            bool leftCalibrate = leftPressDown && FinchController.Left.GetPressTime(FinchControllerElement.HomeButton) > FinchCalibration.Settings.TimePressingToCallCalibration;
+            bool rightCalibrate = rightPressDown && FinchController.Right.GetPressTime(FinchControllerElement.HomeButton) > FinchCalibration.Settings.TimePressingToCallCalibration;
             bool mainCalibrate = chirality == FinchChirality.Left ? leftCalibrate : rightCalibrate;
             bool additionalCalibrate = chirality == FinchChirality.Left ? rightCalibrate : leftCalibrate;
 
